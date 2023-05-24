@@ -6,6 +6,8 @@
   - **Create pull requests directly.**
   - Please send e-mails to Mouri_Naruto@Outlook.com if you have any
     questions.
+  - You are forbidden to modify any content in any files and folders starting 
+    with the "Mile." prefix, or your PR won't be merged and closed immediately.
 - Feedback suggestions and bugs.
   - We use GitHub issues to track bugs and features.
   - For bugs and general issues please 
@@ -15,10 +17,10 @@
 
 #### Prerequisites
 
-- Visual Studio 2019 Version 16.11 or later.
+- Visual Studio 2022 or later.
   - You also need install ARM64 components (MSVC Toolchain and ATL/MFC) if you
     want to compile ARM64 version of NanaGet.
-- Windows 10 Version 20H1 SDK or later.
+- Windows 11 SDK or later.
   - You also need install ARM64 components if you want to compile ARM64 version
     of NanaGet.
 

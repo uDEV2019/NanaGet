@@ -1,60 +1,34 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<!--
-  PROJECT:   Mouri Internal Library Essentials
-  FILE:      BuildAllTargets.proj
-  PURPOSE:   Build all targets script for Visual Studio C++ Project
-
-  LICENSE:   The MIT License
-
-  DEVELOPER: Mouri_Naruto (Mouri_Naruto AT Outlook.com)
--->
 <Project 
   DefaultTargets="Restore;Build"
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <SolutionPath>$(MSBuildThisFileDirectory)*.sln</SolutionPath>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="$(SolutionPath)">
-      <AdditionalProperties>Configuration=Debug;Platform=x86</AdditionalProperties>   
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionPath)">
-      <AdditionalProperties>Configuration=Release;Platform=x86</AdditionalProperties>   
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionPath)">
-      <AdditionalProperties>Configuration=Debug;Platform=x64</AdditionalProperties>   
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionPath)">
-      <AdditionalProperties>Configuration=Release;Platform=x64</AdditionalProperties>   
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionPath)">
-      <AdditionalProperties>Configuration=Debug;Platform=ARM64</AdditionalProperties>   
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionPath)">
-      <AdditionalProperties>Configuration=Release;Platform=ARM64</AdditionalProperties>   
-    </ProjectReference>
-  </ItemGroup>
-  <Target Name="Restore" >
+  <Target Name="Restore">
+    <ItemGroup>
+      <ProjectReference Include="$(MSBuildThisFileDirectory)NanaGet.sln">
+        <AdditionalProperties>Configuration=Debug;Platform=x86</AdditionalProperties>   
+      </ProjectReference>
+      <ProjectReference Include="$(MSBuildThisFileDirectory)NanaGet.sln">
+        <AdditionalProperties>Configuration=Release;Platform=x86</AdditionalProperties>   
+      </ProjectReference>
+    </ItemGroup>
     <MSBuild
       Projects="@(ProjectReference)"
       Targets="Restore"
       StopOnFirstFailure="True"
       Properties="PreferredToolArchitecture=x64" />
   </Target>
-  <Target Name="Build" >
+  <Target Name="Build">
     <MSBuild
-      Projects="@(ProjectReference)"
+      Projects="$(MSBuildThisFileDirectory)NanaGetPackage\NanaGetPackage.wapproj"
       Targets="Build"
       BuildInParallel="True"
       StopOnFirstFailure="True"
-      Properties="PreferredToolArchitecture=x64" />
-  </Target>
-  <Target Name="Rebuild" >
+      Properties="PreferredToolArchitecture=x64;Configuration=Debug;Platform=x86" />
     <MSBuild
-      Projects="@(ProjectReference)"
-      Targets="Rebuild"
+      Projects="$(MSBuildThisFileDirectory)NanaGetPackage\NanaGetPackage.wapproj"
+      Targets="Build"
       BuildInParallel="True"
       StopOnFirstFailure="True"
-      Properties="PreferredToolArchitecture=x64" />
+      Properties="PreferredToolArchitecture=x64;Configuration=Release;Platform=x86" />
   </Target>
 </Project>

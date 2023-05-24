@@ -3,27 +3,37 @@
 #include "MainPage.g.cpp"
 #include "TaskItem.h"
 
+#include <Mile.Helpers.Base.h>
+
 #include <ShlObj.h>
+
+#include <atlres.h>
 
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.UI.Core.h>
 
+namespace NanaGet
+{
+    extern HWND MainWindowHandle;
+    extern LocalAria2Instance* LocalInstance;
+}
+
 namespace winrt::NanaGet::implementation
 {
     using Windows::ApplicationModel::DataTransfer::Clipboard;
     using Windows::ApplicationModel::DataTransfer::DataPackage;
-    using Windows::UI::Core::CoreDispatcher;
-    using Windows::UI::Core::CoreDispatcherPriority;
+    using Windows::System::DispatcherQueuePriority;
     using Windows::UI::Xaml::Visibility;
 
     MainPage::MainPage()
     {
         this->InitializeComponent();
+        this->m_DispatcherQueue = DispatcherQueue::GetForCurrentThread();
         //this->SimpleDemoEntry();
-        this->m_RefreshTimer = ThreadPoolTimer::CreatePeriodicTimer(
-            { this, &MainPage::RefreshTimerHandler },
-            std::chrono::milliseconds(200));
+        this->m_RefreshThread = std::thread(
+            &MainPage::RefreshThreadEntryPoint,
+            this);
     }
 
     winrt::hstring MainPage::SearchFilter()
@@ -39,9 +49,10 @@ namespace winrt::NanaGet::implementation
 
     MainPage::~MainPage()
     {
-        if (this->m_RefreshTimer)
+        this->m_StopRefreshThread = true;
+        if (this->m_RefreshThread.joinable())
         {
-            this->m_RefreshTimer.Cancel();
+            this->m_RefreshThread.join();
         }
     }
 
@@ -52,7 +63,11 @@ namespace winrt::NanaGet::implementation
         UNREFERENCED_PARAMETER(sender);
         UNREFERENCED_PARAMETER(e);
 
-        this->NewTaskGrid().Visibility(Visibility::Visible);
+        ::PostMessageW(
+            NanaGet::MainWindowHandle,
+            WM_COMMAND,
+            MAKEWPARAM(ID_FILE_NEW, BN_CLICKED),
+            0);
     }
 
     void MainPage::TaskManagerGridStartAllButtonClick(
@@ -64,7 +79,7 @@ namespace winrt::NanaGet::implementation
 
         try
         {
-            this->m_Instance.ResumeAll();
+            NanaGet::LocalInstance->ResumeAll();
         }
         catch (...)
         {
@@ -81,7 +96,7 @@ namespace winrt::NanaGet::implementation
 
         try
         {
-            this->m_Instance.PauseAll();
+            NanaGet::LocalInstance->PauseAll();
         }
         catch (...)
         {
@@ -98,7 +113,7 @@ namespace winrt::NanaGet::implementation
 
         try
         {
-            this->m_Instance.ClearList();
+            NanaGet::LocalInstance->ClearList();
         }
         catch (...)
         {
@@ -113,10 +128,12 @@ namespace winrt::NanaGet::implementation
         UNREFERENCED_PARAMETER(sender);
         UNREFERENCED_PARAMETER(e);
 
+        std::filesystem::path downloadsFolderPath = NanaGet::GetDownloadsFolderPath();
+
         SHELLEXECUTEINFOW ExecInfo = { 0 };
         ExecInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
         ExecInfo.lpVerb = L"open";
-        ExecInfo.lpFile = NanaGet::GetDownloadsFolderPath().c_str();
+        ExecInfo.lpFile = downloadsFolderPath.c_str();
         ExecInfo.nShow = SW_SHOWNORMAL;
         ::ShellExecuteExW(&ExecInfo);
     }
@@ -138,7 +155,11 @@ namespace winrt::NanaGet::implementation
         UNREFERENCED_PARAMETER(sender);
         UNREFERENCED_PARAMETER(e);
 
-        this->AboutGrid().Visibility(Visibility::Visible);
+        ::PostMessageW(
+            NanaGet::MainWindowHandle,
+            WM_COMMAND,
+            MAKEWPARAM(ID_APP_ABOUT, BN_CLICKED),
+            0);
     }
 
     void MainPage::TaskManagerGridTaskListContainerContentChanging(
@@ -165,8 +186,8 @@ namespace winrt::NanaGet::implementation
         {
             NanaGet::TaskItem Current =
                 this->GetTaskItemFromEventSender(sender);
-            this->m_Instance.Remove(Current.Gid());
-            this->m_Instance.AddTask(Uri(Current.Source()));
+            NanaGet::LocalInstance->Remove(winrt::to_string(Current.Gid()));
+            NanaGet::LocalInstance->AddTask(winrt::to_string(Current.Source()));
         }
         catch (...)
         {
@@ -184,7 +205,7 @@ namespace winrt::NanaGet::implementation
         {
             NanaGet::TaskItem Current =
                 this->GetTaskItemFromEventSender(sender);
-            this->m_Instance.Resume(Current.Gid());
+            NanaGet::LocalInstance->Resume(winrt::to_string(Current.Gid()));
         }
         catch (...)
         {
@@ -202,7 +223,7 @@ namespace winrt::NanaGet::implementation
         {
             NanaGet::TaskItem Current =
                 this->GetTaskItemFromEventSender(sender);
-            this->m_Instance.Pause(Current.Gid());  
+            NanaGet::LocalInstance->Pause(winrt::to_string(Current.Gid()));
         }
         catch (...)
         {
@@ -254,7 +275,7 @@ namespace winrt::NanaGet::implementation
         {
             NanaGet::TaskItem Current =
                 this->GetTaskItemFromEventSender(sender);
-            this->m_Instance.Cancel(Current.Gid());
+            NanaGet::LocalInstance->Cancel(winrt::to_string(Current.Gid()));
         }
         catch (...)
         {
@@ -272,62 +293,12 @@ namespace winrt::NanaGet::implementation
         {
             NanaGet::TaskItem Current =
                 this->GetTaskItemFromEventSender(sender);
-            this->m_Instance.Remove(Current.Gid());
+            NanaGet::LocalInstance->Remove(winrt::to_string(Current.Gid()));
         }
         catch (...)
         {
 
         }
-    }
-
-    /*void MainPage::NewTaskGridDownloadSourceBrowseButtonClick(
-        IInspectable const& sender,
-        RoutedEventArgs const& e)
-    {
-        UNREFERENCED_PARAMETER(sender);
-        UNREFERENCED_PARAMETER(e);
-    }
-
-    void MainPage::NewTaskGridSaveFolderBrowseButtonClick(
-        IInspectable const& sender,
-        RoutedEventArgs const& e)
-    {
-        UNREFERENCED_PARAMETER(sender);
-        UNREFERENCED_PARAMETER(e);
-    }*/
-
-    void MainPage::NewTaskGridDownloadButtonClick(
-        IInspectable const& sender,
-        RoutedEventArgs const& e)
-    {
-        UNREFERENCED_PARAMETER(sender);
-        UNREFERENCED_PARAMETER(e);
-
-        try
-        {
-            this->m_Instance.AddTask(Uri(
-                this->NewTaskGridDownloadSourceTextBox().Text()));
-        }
-        catch (...)
-        {
-
-        }
-
-        this->NewTaskGrid().Visibility(Visibility::Collapsed);
-
-        this->NewTaskGridDownloadSourceTextBox().Text(L"");
-    }
-
-    void MainPage::NewTaskGridCancelButtonClick(
-        IInspectable const& sender,
-        RoutedEventArgs const& e)
-    {
-        UNREFERENCED_PARAMETER(sender);
-        UNREFERENCED_PARAMETER(e);
-
-        this->NewTaskGrid().Visibility(Visibility::Collapsed);
-
-        this->NewTaskGridDownloadSourceTextBox().Text(L"");
     }
 
     /*void MainPage::SettingsGridCustomDownloadFolderBrowseButtonClick(
@@ -358,61 +329,67 @@ namespace winrt::NanaGet::implementation
         this->SettingsGrid().Visibility(Visibility::Collapsed);
     }*/
 
-    void MainPage::AboutGridGitHubButtonClick(
-        IInspectable const& sender,
-        RoutedEventArgs const& e)
+    void MainPage::RefreshThreadEntryPoint()
     {
-        UNREFERENCED_PARAMETER(sender);
-        UNREFERENCED_PARAMETER(e);
+        winrt::init_apartment();
 
-        SHELLEXECUTEINFOW ExecInfo = { 0 };
-        ExecInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
-        ExecInfo.lpVerb = L"open";
-        ExecInfo.lpFile = L"https://github.com/M2Team/NanaGet";
-        ExecInfo.nShow = SW_SHOWNORMAL;
-        ::ShellExecuteExW(&ExecInfo);
+        ULONGLONG PreviousTick = ::MileGetTickCount();
+
+        while (!this->m_StopRefreshThread)
+        {
+            //::OutputDebugStringW(L"MainPage::RefreshThreadHandler\r\n");
+            this->RefreshThreadHandler();
+
+            ULONGLONG ElapsedTick = ::MileGetTickCount() - PreviousTick;
+            if (ElapsedTick < 1000)
+            {
+                ::SleepEx(static_cast<DWORD>(1000 - ElapsedTick), FALSE);
+            }
+            PreviousTick += ElapsedTick;
+        }
     }
 
-    void MainPage::AboutGridCancelButtonClick(
-        IInspectable const& sender,
-        RoutedEventArgs const& e)
+    void MainPage::RefreshThreadHandler()
     {
-        UNREFERENCED_PARAMETER(sender);
-        UNREFERENCED_PARAMETER(e);
+        winrt::handle EventHandle;
+        EventHandle.attach(::CreateEventExW(
+            nullptr, nullptr,
+            0,
+            EVENT_ALL_ACCESS));
+        winrt::check_bool(static_cast<bool>(EventHandle));
 
-        this->AboutGrid().Visibility(Visibility::Collapsed);
-    }
+        //winrt::slim_lock_guard LockGuard(NanaGet::LocalInstance->InstanceLock());
 
-    winrt::fire_and_forget MainPage::RefreshTimerHandler(
-        ThreadPoolTimer const& timer)
-    {
-        UNREFERENCED_PARAMETER(timer);
-
-        winrt::slim_lock_guard LockGuard(this->m_Instance.InstanceLock());
-
-        this->m_Instance.RefreshInformation();
+        NanaGet::LocalInstance->RefreshInformation();
 
         winrt::hstring GlobalStatusText = NanaGet::FormatWindowsRuntimeString(
             L"\x2193 %s/s \x2191 %s/s",
             NanaGet::ConvertByteSizeToString(
-                this->m_Instance.TotalDownloadSpeed()).data(),
+                NanaGet::LocalInstance->TotalDownloadSpeed()).data(),
             NanaGet::ConvertByteSizeToString(
-                this->m_Instance.TotalUploadSpeed()).data());   
+                NanaGet::LocalInstance->TotalUploadSpeed()).data());
 
         winrt::hstring CurrentSearchFilter = this->m_SearchFilter;
 
+        std::vector<Aria2TaskInformation> Tasks;
+
+        for (std::string const& Gid : NanaGet::LocalInstance->GetTaskList())
+        {
+            Tasks.emplace_back(NanaGet::LocalInstance->GetTaskInformation(Gid));
+        }
+
         std::set<winrt::hstring> Gids;
-        for (Aria2TaskInformation const& Task : this->m_Instance.Tasks())
+        for (Aria2TaskInformation const& Task : Tasks)
         {
             if (!NanaGet::FindSubString(
-                Task.FriendlyName,
+                winrt::to_hstring(Task.FriendlyName),
                 CurrentSearchFilter,
                 true))
             {
                 continue;
             }
 
-            Gids.emplace(Task.Gid);
+            Gids.emplace(winrt::to_hstring(Task.Gid));
         }
 
         bool NeedFullRefresh = false;
@@ -426,10 +403,10 @@ namespace winrt::NanaGet::implementation
         else if (this->m_Gids != Gids)
         {
             std::vector<NanaGet::TaskItem> RawTasks;
-            for (Aria2TaskInformation const& Task : this->m_Instance.Tasks())
+            for (Aria2TaskInformation const& Task : Tasks)
             {
                 if (!NanaGet::FindSubString(
-                    Task.FriendlyName,
+                    winrt::to_hstring(Task.FriendlyName),
                     CurrentSearchFilter,
                     true))
                 {
@@ -448,36 +425,59 @@ namespace winrt::NanaGet::implementation
             NeedFullRefresh = true;
         }
 
-        CoreDispatcher Dispatcher = this->Dispatcher();
-        if (!Dispatcher)
+        if (!NeedFullRefresh && this->m_Tasks)
         {
-            co_return;
-        }
-        co_await winrt::resume_foreground(Dispatcher);
-
-        this->TaskManagerGridGlobalStatusTextBlock().Text(GlobalStatusText);
-
-        if (NeedFullRefresh)
-        {
-            this->TaskManagerGridTaskList().ItemsSource(this->m_Tasks);
-        }
-        else
-        {
-            if (this->m_Tasks)
+            std::map<winrt::hstring, Aria2TaskInformation> RawTasks;
+            for (Aria2TaskInformation const& Task : Tasks)
             {
-                std::map<winrt::hstring, Aria2TaskInformation> RawTasks;
-                for (Aria2TaskInformation const& Task : this->m_Instance.Tasks())
-                {
-                    RawTasks.emplace(std::pair(Task.Gid, Task));
-                }
+                RawTasks.emplace(std::pair(
+                    winrt::to_hstring(Task.Gid),
+                    Task));
+            }
 
-                for (NanaGet::TaskItem const& Task : this->m_Tasks)
-                {
-                    Task.as<NanaGet::implementation::TaskItem>()->Update(
-                        RawTasks[Task.Gid()]);
-                }
+            for (NanaGet::TaskItem const& Task : this->m_Tasks)
+            {
+                Task.as<NanaGet::implementation::TaskItem>()->Update(
+                    RawTasks[Task.Gid()]);
             }
         }
+
+        if (!this->m_DispatcherQueue)
+        {
+            return;
+        }
+        this->m_DispatcherQueue.TryEnqueue(
+            DispatcherQueuePriority::Normal,
+            [&]()
+        {
+            this->TaskManagerGridGlobalStatusTextBlock().Text(GlobalStatusText);
+
+            if (NeedFullRefresh)
+            {
+                this->TaskManagerGridTaskList().ItemsSource(this->m_Tasks);
+            }
+            else if(this->m_Tasks)
+            {
+                try
+                {
+                    for (NanaGet::TaskItem const& Task : this->m_Tasks)
+                    {
+                        Task.as<NanaGet::implementation::TaskItem>()->Notify();
+                    }
+                }
+                catch (...)
+                {
+                    
+                }
+            }
+
+            ::SetEvent(EventHandle.get());
+        });
+
+        ::WaitForSingleObjectEx(
+            EventHandle.get(),
+            INFINITE,
+            FALSE);
     }
 
     NanaGet::TaskItem MainPage::GetTaskItemFromEventSender(
@@ -489,8 +489,6 @@ namespace winrt::NanaGet::implementation
 
 
 
-    using Windows::Data::Json::JsonArray;
-    using Windows::Data::Json::JsonObject;
 
     int MainPage::SimpleDemoEntry()
     {
@@ -504,25 +502,23 @@ namespace winrt::NanaGet::implementation
 
         try
         {
-            JsonValue TokenValue = JsonValue::CreateStringValue(
-                L"token:" + this->m_Instance.ServerToken());
+            nlohmann::json Parameters;
+            Parameters.push_back(
+                "token:" + NanaGet::LocalInstance->ServerToken());
 
-            JsonArray Parameters;
-            Parameters.Append(TokenValue);
+            //std::string ResponseJson = NanaGet::LocalInstance->SimpleJsonRpcCall(
+            //    "aria2.getVersion", //"aria2.tellActive",
+            //    Parameters);
 
-            //JsonObject ResponseJson = this->m_Instance.ExecuteJsonRpcCall(
-            //    L"aria2.getVersion", //L"aria2.tellActive",
-            //    Parameters).GetObject();
-
-            //JsonArray ResponseJson = this->m_Instance.ExecuteJsonRpcCall(
+            //std::string ResponseJson = NanaGet::LocalInstance->SimpleJsonRpcCall(
             //    L"system.listMethods",
-            //    Parameters).GetArray();
+            //    Parameters);
 
-            JsonObject ResponseJson = this->m_Instance.ExecuteJsonRpcCall(
-                L"aria2.getGlobalOption",
-                Parameters).GetObject();
+            std::string ResponseJson = NanaGet::LocalInstance->SimpleJsonRpcCall(
+                "aria2.getGlobalOption",
+                Parameters);
 
-            winrt::hstring ResponseJsonString = ResponseJson.Stringify();
+            winrt::hstring ResponseJsonString = winrt::to_hstring(ResponseJson);
 
             ::MessageBoxW(nullptr, ResponseJsonString.data(), L"NanaGet", 0);
         }
@@ -533,7 +529,7 @@ namespace winrt::NanaGet::implementation
 
         /*::MessageBoxW(
             nullptr,
-            this->m_Instance.ConsoleOutput().c_str(),
+            NanaGet::LocalInstance->ConsoleOutput().c_str(),
             L"NanaGet",
             MB_ICONINFORMATION);*/
 

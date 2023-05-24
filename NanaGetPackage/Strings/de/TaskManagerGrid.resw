@@ -117,7 +117,7 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AboutButton.Label" xml:space="preserve">
+  <data name="AboutButton.Text" xml:space="preserve">
     <value>Über</value>
     <comment>About</comment>
   </data>
@@ -129,6 +129,14 @@
     <value>Liste leeren</value>
     <comment>Clear List</comment>
   </data>
+  <data name="MoreButton.AutomationProperties.Name" xml:space="preserve">
+    <value>More Button</value>
+    <comment>More Button</comment>
+  </data>
+  <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>More</value>
+    <comment>More</comment>
+  </data>
   <data name="NewTaskButton.AutomationProperties.Name" xml:space="preserve">
     <value>Neue Aufgabe Button</value>
     <comment>New Task Button</comment>
@@ -137,7 +145,7 @@
     <value>Neue Aufgabe</value>
     <comment>New Task</comment>
   </data>
-  <data name="OpenDownloadsFolderButton.Label" xml:space="preserve">
+  <data name="OpenDownloadsFolderButton.Text" xml:space="preserve">
     <value>Downloadordner öffnen</value>
     <comment>Open Downloads Folder</comment>
   </data>
@@ -153,27 +161,35 @@
     <value>Downloads suchen</value>
     <comment>Search Downloads</comment>
   </data>
-  <data name="SettingsButton.Label" xml:space="preserve">
+  <data name="SettingsButton.Text" xml:space="preserve">
     <value>Einstellungen</value>
     <comment>Settings</comment>
   </data>
   <data name="StartAllButton.AutomationProperties.Name" xml:space="preserve">
     <value>Alle starten Button</value>
-   <comment>Start All Button</comment>
+    <comment>Start All Button</comment>
   </data>
   <data name="StartAllButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Alle starten</value>
     <comment>Start All</comment>
   </data>
-  <data name="TaskItemCancelButton.Label" xml:space="preserve">
+  <data name="TaskItemCancelButton.Text" xml:space="preserve">
     <value>Abbrechen</value>
     <comment>Cancel</comment>
   </data>
-  <data name="TaskItemCopyLinkButton.Label" xml:space="preserve">
+  <data name="TaskItemCopyLinkButton.Text" xml:space="preserve">
     <value>Link kopieren</value>
     <comment>Copy Link</comment>
   </data>
-  <data name="TaskItemOpenFolderButton.Label" xml:space="preserve">
+  <data name="TaskItemMoreButton.AutomationProperties.Name" xml:space="preserve">
+    <value>More Button</value>
+    <comment>More Button</comment>
+  </data>
+  <data name="TaskItemMoreButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>More</value>
+    <comment>More</comment>
+  </data>
+  <data name="TaskItemOpenFolderButton.Text" xml:space="preserve">
     <value>Ordner öffnen</value>
     <comment>Open Folder</comment>
   </data>
@@ -185,7 +201,7 @@
     <value>Pause</value>
     <comment>Pause</comment>
   </data>
-  <data name="TaskItemRemoveButton.Label" xml:space="preserve">
+  <data name="TaskItemRemoveButton.Text" xml:space="preserve">
     <value>Entfernen</value>
     <comment>Remove</comment>
   </data>

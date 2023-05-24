@@ -5,6 +5,8 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="MainPage.xaml" />
+    <Page Include="AboutPage.xaml" />
+    <Page Include="NewTaskPage.xaml" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />
@@ -23,7 +25,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Mile.Project.Properties.h" />
     <ClInclude Include="NanaGetCore.h">
       <Filter>NanaGetCore</Filter>
     </ClInclude>

@@ -15,34 +15,36 @@
     <AppxPackage>false</AppxPackage>
     <ApplicationType>Windows Store</ApplicationType>
     <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
-    <WindowsTargetPlatformMinVersion>10.0.17763.0</WindowsTargetPlatformMinVersion>
+    <WindowsTargetPlatformMinVersion>10.0.19041.0</WindowsTargetPlatformMinVersion>
     <MileProjectEnableVCLTLSupport>true</MileProjectEnableVCLTLSupport>
     <MileProjectEnableCppWinRTSupport>true</MileProjectEnableCppWinRTSupport>
+    <MileProjectUseProjectProperties>true</MileProjectUseProjectProperties>
+    <MileProjectCompanyName>M2-Team</MileProjectCompanyName>
+    <MileProjectFileDescription>NanaGet for Windows</MileProjectFileDescription>
+    <MileProjectInternalName>NanaGet</MileProjectInternalName>
+    <MileProjectLegalCopyright>© M2-Team and Contributors. All rights reserved.</MileProjectLegalCopyright>
+    <MileProjectOriginalFilename>NanaGet.exe</MileProjectOriginalFilename>
+    <MileProjectProductName>NanaGet</MileProjectProductName>
+    <MileProjectVersion>1.1.$([System.DateTime]::Today.Subtract($([System.DateTime]::Parse('2022-04-25'))).TotalDays).0</MileProjectVersion>
+    <MileProjectVersionTag>Preview 1</MileProjectVersionTag>
   </PropertyGroup>
-  <PropertyGroup Label="Globals">
-    <!--
-      This is an override that, puzzlingly, _forces XBF (XAML binary) embedding_.
-      We have to do this to overcome a layout issue in the WAP packaging project.
-      When we do this, the XBF ends up in resources.pri.
-    -->
-    <DisableEmbeddedXbf>false</DisableEmbeddedXbf>
-    <_SupportXbfAsEmbedFileResources>true</_SupportXbfAsEmbedFileResources>
-  </PropertyGroup>
+  <Import Project="..\Mile.Project.Windows\Mile.Project.Cpp.Default.props" />
   <Import Project="..\Mile.Project.Windows\Mile.Project.Cpp.props" />
-  <Import Project="..\Mile.Library.Windows\Mile.Library.Windows.props" />
   <Import Project="..\ThirdParty\WindowsTemplateLibrary.props" />
   <Import Project="..\ThirdParty\JsonForModernC++.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="PropertySheet.props" />
   </ImportGroup>
-  <ItemDefinitionGroup>
-    <ClCompile>
-      <PreprocessorDefinitions>DISABLE_XAML_GENERATED_MAIN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-  </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Mile.Project.Properties.h" />
+    <ClInclude Include="AboutPage.h">
+      <DependentUpon>AboutPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="NanaGetCore.h" />
+    <ClInclude Include="NewTaskPage.h">
+      <DependentUpon>NewTaskPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.h">
       <DependentUpon>App.xaml</DependentUpon>
@@ -59,12 +61,26 @@
     <ApplicationDefinition Include="App.xaml">
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="AboutPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="MainPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="NewTaskPage.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AboutPage.cpp">
+      <DependentUpon>AboutPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="NanaGetCore.cpp" />
+    <ClCompile Include="NewTaskPage.cpp">
+      <DependentUpon>NewTaskPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -81,11 +97,19 @@
     <ClCompile Include="WinMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Midl Include="AboutPage.idl">
+      <DependentUpon>AboutPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
     <Midl Include="App.idl">
       <DependentUpon>App.xaml</DependentUpon>
     </Midl>
     <Midl Include="MainPage.idl">
       <DependentUpon>MainPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="NewTaskPage.idl">
+      <DependentUpon>NewTaskPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
     </Midl>
     <Midl Include="TaskItem.idl" />
   </ItemGroup>
@@ -96,11 +120,18 @@
     <Manifest Include="NanaGet.manifest" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Mile.Xaml\Mile.Xaml.vcxproj" />
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="NanaGetResources.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Mile.Xaml">
+      <Version>2.0.617</Version>
+    </PackageReference>
+    <PackageReference Include="Mile.Windows.Helpers">
+      <Version>1.0.15</Version>
+    </PackageReference>
+    <PackageReference Include="Mile.Aria2">
+      <Version>1.0.8</Version>
+    </PackageReference>
+  </ItemGroup>
   <Import Project="..\Mile.Project.Windows\Mile.Project.Cpp.targets" />
-  <Import Project="..\Mile.Xaml\MrtCore.PriGen.targets" />
 </Project>

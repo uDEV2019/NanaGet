@@ -3,7 +3,7 @@
 #include "MainPage.g.h"
 
 #include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.System.Threading.h>
+#include <winrt/Windows.System.h>
 #include <winrt/Windows.UI.Xaml.Controls.h>
 
 #include "NanaGetCore.h"
@@ -11,8 +11,8 @@
 namespace winrt::NanaGet::implementation
 {
     using Windows::Foundation::Collections::IObservableVector;
-    using Windows::Foundation::IInspectable;  
-    using Windows::System::Threading::ThreadPoolTimer;
+    using Windows::System::DispatcherQueue;
+    using Windows::UI::Xaml::DispatcherTimer;
     using Windows::UI::Xaml::RoutedEventArgs;
     using Windows::UI::Xaml::Controls::ContainerContentChangingEventArgs;
     using Windows::UI::Xaml::Controls::ListViewBase;
@@ -90,22 +90,6 @@ namespace winrt::NanaGet::implementation
             IInspectable const& sender,
             RoutedEventArgs const& e);
 
-        /*void NewTaskGridDownloadSourceBrowseButtonClick(
-            IInspectable const& sender,
-            RoutedEventArgs const& e);
-
-        void NewTaskGridSaveFolderBrowseButtonClick(
-            IInspectable const& sender,
-            RoutedEventArgs const& e);*/
-
-        void NewTaskGridDownloadButtonClick(
-            IInspectable const& sender,
-            RoutedEventArgs const& e);
-
-        void NewTaskGridCancelButtonClick(
-            IInspectable const& sender,
-            RoutedEventArgs const& e);
-
         /*void SettingsGridCustomDownloadFolderBrowseButtonClick(
             IInspectable const& sender,
             RoutedEventArgs const& e);
@@ -118,25 +102,20 @@ namespace winrt::NanaGet::implementation
             IInspectable const& sender,
             RoutedEventArgs const& e);*/
 
-        void AboutGridGitHubButtonClick(
-            IInspectable const& sender,
-            RoutedEventArgs const& e);
-
-        void AboutGridCancelButtonClick(
-            IInspectable const& sender,
-            RoutedEventArgs const& e);
-
     private:
 
-        NanaGet::LocalAria2Instance m_Instance;
-        ThreadPoolTimer m_RefreshTimer = nullptr;
+        DispatcherQueue m_DispatcherQueue = nullptr;
+
+        std::thread m_RefreshThread;
+        volatile bool m_StopRefreshThread = false;
 
         std::set<winrt::hstring> m_Gids;
         IObservableVector<NanaGet::TaskItem> m_Tasks = nullptr;
         winrt::hstring m_SearchFilter;
 
-        winrt::fire_and_forget RefreshTimerHandler(
-            ThreadPoolTimer const& timer);
+        void RefreshThreadEntryPoint();
+
+        void RefreshThreadHandler();
 
         int SimpleDemoEntry();
 

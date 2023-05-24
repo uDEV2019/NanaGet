@@ -6,8 +6,8 @@
   <Import Project="..\Mile.Project.Windows\Mile.Project.Wap.props" />
   <PropertyGroup>
     <ProjectGuid>79087060-1853-4203-B6F6-06DE231B97D7</ProjectGuid>
-    <TargetPlatformVersion>10.0.22000.0</TargetPlatformVersion>
-    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <TargetPlatformVersion>10.0.22621.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <DefaultLanguage>en</DefaultLanguage>
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
     <EntryPointProjectUniqueName>..\NanaGet\NanaGet.vcxproj</EntryPointProjectUniqueName>
@@ -35,15 +35,11 @@
     <PRIResource Include="Strings\**\*">
       <Link>Strings\%(RecursiveDir)%(FileName)%(Extension)</Link>
     </PRIResource>
-    <!-- aria2 -->
-    <Content Include="..\aria2\aria2c.exe">
-      <DeploymentContent>true</DeploymentContent>
-      <Link>aria2c.exe</Link>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NanaGet\NanaGet.vcxproj">
-      <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
+      <Project>{4C5F187E-4734-489E-9D80-200B3EF14DCA}</Project>
+      <SetPlatform Condition="'$(Platform)'=='x86'">Platform=Win32</SetPlatform>
     </ProjectReference>
   </ItemGroup>
   <Import Project="..\Mile.Project.Windows\Mile.Project.Wap.targets" />

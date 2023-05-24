@@ -19,19 +19,19 @@
 #error "[NanaGetCore] You should use a C++ compiler with the C++17 standard."
 #endif
 
+#include <Mile.Helpers.CppWinRT.h>
+
 #include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.Data.Json.h>
 #include <winrt/Windows.Web.Http.h>
 
 #include <filesystem>
 #include <set>
 
+#include <json.hpp>
+
 namespace winrt
 {
     using Windows::Foundation::Uri;
-    using Windows::Data::Json::IJsonValue;
-    using Windows::Data::Json::JsonObject;
-    using Windows::Data::Json::JsonValue;
     using Windows::Web::Http::HttpClient;
 }
 
@@ -84,14 +84,14 @@ namespace NanaGet
 
     struct Aria2UriInformation
     {
-        winrt::hstring Uri;
+        std::string Uri;
         Aria2UriStatus Status;
     };
 
     struct Aria2FileInformation
     {
         std::uint64_t Index;
-        winrt::hstring Path;
+        std::string Path;
         std::uint64_t Length;
         std::uint64_t CompletedLength;
         bool Selected;
@@ -110,16 +110,16 @@ namespace NanaGet
 
     struct Aria2TaskInformation
     {
-        winrt::hstring Gid;
+        std::string Gid;
         Aria2TaskStatus Status;
         std::uint64_t TotalLength;
         std::uint64_t CompletedLength;
         std::uint64_t DownloadSpeed;
         std::uint64_t UploadSpeed;
-        winrt::hstring InfoHash;
-        winrt::hstring Dir;
+        std::string InfoHash;
+        std::string Dir;
         std::vector<Aria2FileInformation> Files;
-        winrt::hstring FriendlyName;
+        std::string FriendlyName;
     };
 
     class Aria2Instance
@@ -127,13 +127,13 @@ namespace NanaGet
     public:
         Aria2Instance(
             winrt::Uri const& ServerUri,
-            winrt::hstring const& ServerToken);
+            std::string const& ServerToken);
 
         ~Aria2Instance();
 
         winrt::Uri ServerUri();
 
-        winrt::hstring ServerToken();
+        std::string ServerToken();
 
         void Shutdown(
             bool Force = false);
@@ -146,21 +146,21 @@ namespace NanaGet
         void ClearList();
 
         void Pause(
-            winrt::hstring Gid,
+            std::string const& Gid,
             bool Force = false);
 
         void Resume(
-            winrt::hstring Gid);
+            std::string const& Gid);
 
         void Cancel(
-            winrt::hstring Gid,
+            std::string const& Gid,
             bool Force = false);
 
         void Remove(
-            winrt::hstring Gid);
+            std::string const& Gid);
 
-        winrt::hstring AddTask(
-            winrt::Uri const& Source);
+        std::string AddTask(
+            std::string const& Source);
 
         winrt::slim_mutex& InstanceLock();
 
@@ -168,13 +168,19 @@ namespace NanaGet
 
         std::uint64_t TotalUploadSpeed();
 
-        std::vector<Aria2TaskInformation> Tasks();
-
         void RefreshInformation();
 
-        winrt::JsonValue ExecuteJsonRpcCall(
-            winrt::hstring const& MethodName,
-            winrt::IJsonValue const& Parameters);
+        Aria2TaskInformation GetTaskInformation(
+            std::string const& Gid);
+
+        std::vector<std::string> GetTaskList();
+
+        std::string SimplePost(
+            std::string const& Content);
+
+        std::string SimpleJsonRpcCall(
+            std::string const& MethodName,
+            std::string const& Parameters);
 
     protected:
 
@@ -182,32 +188,27 @@ namespace NanaGet
 
         void UpdateInstance(
             winrt::Uri const& ServerUri,
-            winrt::hstring const& ServerToken);
+            std::string const& ServerToken);
 
     private:
 
         winrt::Uri m_ServerUri = nullptr;
-        winrt::hstring m_ServerToken;
-        winrt::JsonValue m_ServerTokenJsonValue = nullptr;
+        std::string m_ServerToken;
 
         winrt::HttpClient m_HttpClient;
 
         winrt::slim_mutex m_InstanceLock;
         std::uint64_t m_TotalDownloadSpeed = 0;
         std::uint64_t m_TotalUploadSpeed = 0;
-        std::vector<Aria2TaskInformation> m_Tasks;
-
-        Aria2GlobalStatus ParseGlobalStatus(
-            winrt::JsonObject Value);
 
         Aria2UriInformation ParseUriInformation(
-            winrt::JsonObject Value);
+            nlohmann::json const& Value);
 
         Aria2FileInformation ParseFileInformation(
-            winrt::JsonObject Value);
+            nlohmann::json const& Value);
 
         Aria2TaskInformation ParseTaskInformation(
-            winrt::JsonObject Value);
+            nlohmann::json const& Value);
     };
 
     class LocalAria2Instance : public Aria2Instance
@@ -243,6 +244,11 @@ namespace NanaGet
 namespace winrt::NanaGet
 {
     using namespace ::NanaGet;
+}
+
+namespace winrt::Mile
+{
+    using namespace ::Mile;
 }
 
 #endif // !NANAGET_CORE
